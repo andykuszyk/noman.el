@@ -10,10 +10,11 @@
 
 (defun noman-menu (label)
   (interactive (list (completing-read "Sub-command: " (cl-mapcar #'button-label noman--buttons))))
-  (dolist (button noman--buttons)
-    (when (string= label (button-label button))
+  (catch 'noman--button-found
+    (dolist (button noman--buttons)
+      (when (string= label (button-label button))
 	(button-activate button)
-	(break))))
+	(throw 'noman--button-found t)))))
 
 (defun noman--follow-link (button)
   "Follow a link from BUTTON in a noman buffer."
