@@ -31,6 +31,14 @@
   (let ((subcommand (button-label button)))
     (noman (format "%s %s" noman--last-command subcommand))))
 
+(defun noman--exec (cmd suffix buffer)
+  (let ((cmd-and-options (split-string cmd " ")))
+    (apply 'call-process
+	   (append
+	    (list (nth 0 cmd-and-options) nil buffer nil)
+	    (nthcdr 1 cmd-and-options)
+	    (list suffix)))))
+
 (defun noman (cmd)
   "Attempt to parse comand line help for the command CMD."
   (interactive "MCommand: ")
@@ -41,12 +49,10 @@
     (with-current-buffer buffer
       (read-only-mode -1)
       (erase-buffer)
-      (let ((cmd-and-options (split-string cmd " ")))
-	(apply 'call-process
-	       (append
-		(list (nth 0 cmd-and-options) nil buffer nil)
-		(nthcdr 1 cmd-and-options)
-		(list "--help"))))
+      (unless (= (noman--exec cmd "--help" buffer) 0)
+	(erase-buffer)
+	(noman--exec cmd "help" buffer)
+	(replace-regexp-in-region "." "" (point-min) (point-max)))
       (read-only-mode t)
       (goto-char (point-min))
       (let ((max-lines (count-lines (point-min) (point-max))))
