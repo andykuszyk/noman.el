@@ -9,8 +9,11 @@
 (setq noman--buttons '())
 
 (defun noman-menu (label)
-  (interactive (list (completing-read "prompt: " (cl-mapcar #'button-label noman--buttons))))
-  (message label))
+  (interactive (list (completing-read "Sub-command: " (cl-mapcar #'button-label noman--buttons))))
+  (dolist (button noman--buttons)
+    (when (string= label (button-label button))
+	(button-activate button)
+	(break))))
 
 (defun noman--follow-link (button)
   "Follow a link from BUTTON in a noman buffer."
@@ -19,7 +22,7 @@
 
 (defun noman (cmd)
   "Attempt to parse comand line help for the command CMD."
-  (interactive "Mcommand: ")
+  (interactive "MCommand: ")
   (setq noman--last-command cmd)
   (setq noman--buttons '())
   (let ((buffer (get-buffer-create "noman")))
@@ -44,6 +47,10 @@
 		    (setq noman--buttons (append noman--buttons (list (make-button (+ (line-beginning-position) beg) (+ (line-beginning-position) end) 'action #'noman--follow-link)))))))))
 	  (forward-line)))
       (goto-char (point-min))
+      (local-set-key (kbd "m") #'noman-menu)
+      (local-set-key (kbd "q") #'quit-window)
+      (local-set-key (kbd "n") #'next-line)
+      (local-set-key (kbd "p") #'previous-line)
       (display-buffer buffer))))
 
 (provide 'noman)
