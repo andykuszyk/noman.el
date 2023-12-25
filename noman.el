@@ -45,7 +45,7 @@
   (setq noman--last-command cmd)
   (setq noman--buttons '())
   (push cmd noman--history)
-  (let ((buffer (get-buffer-create "noman")))
+  (let ((buffer (get-buffer-create (format "*noman %s*" cmd))))
     (with-current-buffer buffer
       (read-only-mode -1)
       (erase-buffer)
