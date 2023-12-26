@@ -72,6 +72,8 @@
       (setq noman--buttons (noman--make-buttons buffer cmd))
       (goto-char (point-min))
       (local-set-key (kbd "m") #'noman-menu)
+      (local-set-key (kbd "g") #'noman-menu)
+      (local-set-key (kbd "G") #'noman)
       (local-set-key (kbd "q") #'quit-window)
       (local-set-key (kbd "n") #'next-line)
       (local-set-key (kbd "p") #'previous-line)
