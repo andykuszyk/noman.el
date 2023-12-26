@@ -39,6 +39,21 @@
 	    (nthcdr 1 cmd-and-options)
 	    (list suffix)))))
 
+(defun noman--make-buttons (buffer cmd)
+  (with-current-buffer buffer
+    (goto-char (point-min))
+    (let ((buttons '())
+	  (max-lines (count-lines (point-min) (point-max))))
+      (while (< (line-number-at-pos (point)) (+ max-lines 1))
+	(let ((current-line-string (buffer-substring-no-properties (line-beginning-position) (line-end-position))))
+	  (when (string-prefix-p "  " current-line-string)
+	    (let ((first-match (string-match "^ +\\([A-Za-z0-9\\-]+\\) \\{2\\}.*$" current-line-string)))
+	      (when first-match
+		(let ((beg (match-beginning 1)) (end (match-end 1)))
+		  (setq buttons (append buttons (list (make-button (+ (line-beginning-position) beg) (+ (line-beginning-position) end) 'action #'noman--follow-link)))))))))
+	(forward-line))
+      buttons)))
+
 (defun noman (cmd)
   "Attempt to parse comand line help for the command CMD."
   (interactive "MCommand: ")
@@ -54,16 +69,7 @@
 	(noman--exec cmd "help" buffer)
 	(replace-regexp-in-region "." "" (point-min) (point-max)))
       (read-only-mode t)
-      (goto-char (point-min))
-      (let ((max-lines (count-lines (point-min) (point-max))))
-	(while (< (line-number-at-pos (point)) (+ max-lines 1))
-	  (let ((current-line-string (buffer-substring-no-properties (line-beginning-position) (line-end-position))))
-	    (when (string-prefix-p "  " current-line-string)
-	      (let ((first-match (string-match "^ +\\([A-Za-z0-9\\-]+\\) \\{2\\}.*$" current-line-string)))
-		(when first-match
-		  (let ((beg (match-beginning 1)) (end (match-end 1)))
-		    (setq noman--buttons (append noman--buttons (list (make-button (+ (line-beginning-position) beg) (+ (line-beginning-position) end) 'action #'noman--follow-link)))))))))
-	  (forward-line)))
+      (setq noman--buttons (noman--make-buttons buffer cmd))
       (goto-char (point-min))
       (local-set-key (kbd "m") #'noman-menu)
       (local-set-key (kbd "q") #'quit-window)
