@@ -40,7 +40,10 @@
 	    (list suffix)))))
 
 (defun noman--make-aws-button (line)
-  (let ((first-match (string-match "^ +o \\([A-Za-z0-9\\-]\\)$" line)))
+  (let ((first-match
+	 (string-match
+	  "^ +o +\\([A-Za-z0-9\\-]+\\)$"
+	  line)))
     (when first-match
       (let ((beg (match-beginning 1)) (end (match-end 1)))
 	  (make-button (+ (line-beginning-position) beg) (+ (line-beginning-position) end) 'action #'noman--follow-link)))))
@@ -50,7 +53,10 @@
 
 (defun noman--make-default-button (line)
   (when (string-prefix-p "  " line)
-    (let ((first-match (string-match "^ +\\([A-Za-z0-9\\-]+\\) \\{2\\}.*$" line)))
+    (let ((first-match
+	   (string-match
+	    "^ +\\([A-Za-z0-9\\-]+\\) \\{2\\}.*$"
+	    line)))
       (when first-match
 	(let ((beg (match-beginning 1)) (end (match-end 1)))
 	  (make-button (+ (line-beginning-position) beg) (+ (line-beginning-position) end) 'action #'noman--follow-link))))))
