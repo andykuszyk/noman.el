@@ -102,7 +102,13 @@
     buttons))
 
 (defun noman (cmd)
-  "Attempt to parse comand line help for the command CMD."
+  "Attempt to parse comand line help for the command CMD.
+
+Noman (no-man) has similar keybindings to man:
+
+g/m  -  jump to a subcommand
+G    -  view help for a different command
+l    -  go back to the last subcommand"
   (interactive "MCommand: ")
   (setq noman--last-command cmd)
   (setq noman--buttons '())

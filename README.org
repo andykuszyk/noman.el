@@ -1,0 +1,34 @@
+* Noman
+Noman (pronounced no-man) is a small package that tries to parse the help output from command line programs into an easy-to-navigate Emacs user interface.
+
+I primarily wrote this package to navigate the command line help from ~kubectl~ and ~aws~, both of which have nested sub-commands, and quite verbose (and helpful!) command line help.
+
+Neither of these programs ships with ~man~ pages, or similar offline documentation. I find myself consulting the command line help often, but struggling to find the experience very ergonomic.
+
+This package aims to make the experience of browsing command line help more pleasant.
+
+** TODO Installation
+#+begin_src elisp :results
+#+end_src
+
+** Usage
+The entrypoint for this package is the ~noman~ command:
+
+#+begin_src
+M-x noman RET
+#+end_src
+
+When prompted for a command, enter a program in your ~PATH~, e.g. ~kubectl~.
+
+Noman then tries to run the command with the ~--help~ or ~help~ suffixes, and parse the output. Parsing the output simply involves looking for subcommands, and turning them into links for subsequent invocations of ~noman~.
+
+The key-bindings are as follows:
+
+| Key        | Description                         |
+|------------+-------------------------------------|
+| ~n~        | Next line                           |
+| ~p~        | Previous line                       |
+| ~q~        | Quit the window                     |
+| ~g~ or ~m~ | Select a subcommand to display      |
+| ~G~        | Run ~noman~ for a different command |
+| ~l~        | Back to the previous subcommand     |
