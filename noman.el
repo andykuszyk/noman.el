@@ -39,27 +39,39 @@
 	    (nthcdr 1 cmd-and-options)
 	    (list suffix)))))
 
-(setq noman-parsing-functions
-      '(("aws" . #'noman--make-aws-button)))
-
 (defun noman--make-aws-button (line)
-  )
+  (let ((first-match (string-match "^ +o \\([A-Za-z0-9\\-]\\)$" line)))
+    (when first-match
+      (let ((beg (match-beginning 1)) (end (match-end 1)))
+	  (make-button (+ (line-beginning-position) beg) (+ (line-beginning-position) end) 'action #'noman--follow-link)))))
+
+(setq noman-parsing-functions
+      '(("aws" . noman--make-aws-button)))
 
 (defun noman--make-default-button (line)
-  (when (string-prefix-p "  " current-line-string)
-    (let ((first-match (string-match "^ +\\([A-Za-z0-9\\-]+\\) \\{2\\}.*$" current-line-string)))
+  (when (string-prefix-p "  " line)
+    (let ((first-match (string-match "^ +\\([A-Za-z0-9\\-]+\\) \\{2\\}.*$" line)))
       (when first-match
 	(let ((beg (match-beginning 1)) (end (match-end 1)))
 	  (make-button (+ (line-beginning-position) beg) (+ (line-beginning-position) end) 'action #'noman--follow-link))))))
 
+(defun noman--get-button-func (cmd)
+  (let ((func (cdr (assoc (nth 0 (split-string cmd " ")) noman-parsing-functions))))
+    (if func
+	func
+      #'noman--make-default-button)))
+
 (defun noman--make-buttons (buffer cmd)
-  (let ((buttons (list)))
+  (let ((buttons (list))
+	(button-func (noman--get-button-func cmd)))
     (with-current-buffer buffer
       (goto-char (point-min))
       (let ((max-lines (count-lines (point-min) (point-max))))
 	(while (< (line-number-at-pos (point)) (+ max-lines 1))
 	  (let ((current-line-string (buffer-substring-no-properties (line-beginning-position) (line-end-position))))
-	    (let ((button (noman--make-default-button current-line-string)))
+	    (let ((button (apply
+			   button-func
+			   (list current-line-string))))
 	      (if button
 		(push button buttons))))
 	  (forward-line))))
