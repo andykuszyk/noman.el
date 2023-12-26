@@ -4,21 +4,33 @@
 ;;; Code:
 (setq display-buffer-alist '(("noman" display-buffer-same-window)))
 
-(setq noman--last-command "")
+(defvar noman--last-command nil
+ "The last command that noman executed.")
 
-(setq noman--buttons '())
+(defvar noman--buttons '()
+  "A list of buttons in the current noman buffer.")
 
-(setq noman--history '())
+(defvar noman--history '()
+  "The history of recent noman commands.")
 
-(defun noman-menu (label)
-  (interactive (list (completing-read "Sub-command: " (cl-mapcar #'button-label noman--buttons))))
+(defun noman-menu (subcommand)
+  "Choose the SUBCOMMAND to view help for."
+  (interactive (list
+		(completing-read
+		 "Sub-command: "
+		 (cl-mapcar
+		  #'button-label
+		  noman--buttons))))
   (catch 'noman--button-found
     (dolist (button noman--buttons)
-      (when (string= label (button-label button))
+      (when (string=
+	     subcommand
+	     (button-label button))
 	(button-activate button)
 	(throw 'noman--button-found t)))))
 
 (defun noman-back ()
+  "Go to the previous subcommand."
   (interactive)
   (if (> (length noman--history) 1)
     (let ((current-cmd (pop noman--history))
@@ -32,6 +44,7 @@
     (noman (format "%s %s" noman--last-command subcommand))))
 
 (defun noman--exec (cmd suffix buffer)
+  "Execute CMD with the help SUFFIX and place the results in BUFFER."
   (let ((cmd-and-options (split-string cmd " ")))
     (apply 'call-process
 	   (append
@@ -40,18 +53,21 @@
 	    (list suffix)))))
 
 (defun noman--make-aws-button (line)
+  "Parse the string LINE for an aws-style command."
   (let ((first-match
 	 (string-match
 	  "^ +o +\\([A-Za-z0-9\\-]+\\)$"
 	  line)))
     (when first-match
       (let ((beg (match-beginning 1)) (end (match-end 1)))
-	  (make-button (+ (line-beginning-position) beg) (+ (line-beginning-position) end) 'action #'noman--follow-link)))))
+	(make-button (+ (line-beginning-position) beg) (+ (line-beginning-position) end) 'action #'noman--follow-link)))))
 
-(setq noman-parsing-functions
-      '(("aws" . noman--make-aws-button)))
+(defvar noman-parsing-functions
+  '(("aws" . noman--make-aws-button))
+  "Custom parsing functions to use for specific commands. Each function should take a single string containing a line of text, and return a button, or nil.")
 
 (defun noman--make-default-button (line)
+  "Parse the string LINE for a default command."
   (when (string-prefix-p "  " line)
     (let ((first-match
 	   (string-match
@@ -62,12 +78,14 @@
 	  (make-button (+ (line-beginning-position) beg) (+ (line-beginning-position) end) 'action #'noman--follow-link))))))
 
 (defun noman--get-button-func (cmd)
+  "Gets the function to use for parsing subcommands for the given CMD."
   (let ((func (cdr (assoc (nth 0 (split-string cmd " ")) noman-parsing-functions))))
     (if func
 	func
       #'noman--make-default-button)))
 
 (defun noman--make-buttons (buffer cmd)
+  "Iterates over the lines in a BUFFER, parsing subcommands for CMD as buttons."
   (let ((buttons (list))
 	(button-func (noman--get-button-func cmd)))
     (with-current-buffer buffer
@@ -79,7 +97,7 @@
 			   button-func
 			   (list current-line-string))))
 	      (if button
-		(push button buttons))))
+		  (push button buttons))))
 	  (forward-line))))
     buttons))
 
