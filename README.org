@@ -7,8 +7,15 @@ Neither of these programs ships with ~man~ pages, or similar offline documentati
 
 This package aims to make the experience of browsing command line help more pleasant.
 
-** TODO Installation
-#+begin_src elisp :results
+** Installation
+Noman isn't on MELPA yet, but it can be installed directly from this repo. First, clone the repo:
+#+begin_src bash :results none
+git clone https://github.com/andykuszyk/noman.el ~/noman.el
+#+end_src
+Then, add it to your load path:
+#+begin_src elisp :results none
+(add-to-list 'load-path "~/noman.el")
+(require 'noman)
 #+end_src
 
 ** Usage
