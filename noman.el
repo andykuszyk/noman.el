@@ -71,7 +71,7 @@
   (when (string-prefix-p "  " line)
     (let ((first-match
 	   (string-match
-	    "^ +\\([A-Za-z0-9\\-]+\\) \\{2\\}.*$"
+	    "^ +\\([A-Za-z]+[A-Za-z0-9\\-]+\\) \\{2\\}.*$"
 	    line)))
       (when first-match
 	(let ((beg (match-beginning 1)) (end (match-end 1)))
