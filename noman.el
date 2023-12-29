@@ -1,11 +1,12 @@
 ;;; noman.el --- read command line help without a man page.
 ;;; Commentary:
-
+;;; Noman is a package that parses command line help from flags like
+;;; --help, and presents it in an easy-to-navigate Emacs buffer.
 ;;; Code:
-(setq display-buffer-alist '(("noman" display-buffer-same-window)))
+(require 'cl-lib)
 
 (defvar noman--last-command nil
- "The last command that noman executed.")
+  "The last command that noman executed.")
 
 (defvar noman--buttons '()
   "A list of buttons in the current noman buffer.")
@@ -18,9 +19,7 @@
   (interactive (list
 		(completing-read
 		 "Sub-command: "
-		 (cl-mapcar
-		  #'button-label
-		  noman--buttons))))
+		 (cl-mapcar #'button-label noman--buttons))))
   (catch 'noman--button-found
     (dolist (button noman--buttons)
       (when (string=
@@ -60,11 +59,16 @@
 	  line)))
     (when first-match
       (let ((beg (match-beginning 1)) (end (match-end 1)))
-	(make-button (+ (line-beginning-position) beg) (+ (line-beginning-position) end) 'action #'noman--follow-link)))))
+	(make-button
+	 (+ (line-beginning-position) beg)
+	 (+ (line-beginning-position) end)
+	 'action #'noman--follow-link)))))
 
 (defvar noman-parsing-functions
   '(("aws" . noman--make-aws-button))
-  "Custom parsing functions to use for specific commands. Each function should take a single string containing a line of text, and return a button, or nil.")
+  "Custom parsing functions to use for specific commands.
+pEach function should take a single string containing a line of text,
+and return a button, or nil.")
 
 (defun noman--make-default-button (line)
   "Parse the string LINE for a default command."
@@ -75,11 +79,15 @@
 	    line)))
       (when first-match
 	(let ((beg (match-beginning 1)) (end (match-end 1)))
-	  (make-button (+ (line-beginning-position) beg) (+ (line-beginning-position) end) 'action #'noman--follow-link))))))
+	  (make-button
+	   (+ (line-beginning-position) beg)
+	   (+ (line-beginning-position) end)
+	   'action #'noman--follow-link))))))
 
 (defun noman--get-button-func (cmd)
   "Gets the function to use for parsing subcommands for the given CMD."
-  (let ((func (cdr (assoc (nth 0 (split-string cmd " ")) noman-parsing-functions))))
+  (let ((func
+	 (cdr (assoc (nth 0 (split-string cmd " ")) noman-parsing-functions))))
     (if func
 	func
       #'noman--make-default-button)))
@@ -92,7 +100,10 @@
       (goto-char (point-min))
       (let ((max-lines (count-lines (point-min) (point-max))))
 	(while (< (line-number-at-pos (point)) (+ max-lines 1))
-	  (let ((current-line-string (buffer-substring-no-properties (line-beginning-position) (line-end-position))))
+	  (let ((current-line-string
+		 (buffer-substring-no-properties
+		  (line-beginning-position)
+		  (line-end-position))))
 	    (let ((button (apply
 			   button-func
 			   (list current-line-string))))
