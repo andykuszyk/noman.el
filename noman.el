@@ -100,15 +100,11 @@ and return a button, or nil.")
       (goto-char (point-min))
       (let ((max-lines (count-lines (point-min) (point-max))))
 	(while (< (line-number-at-pos (point)) (+ max-lines 1))
-	  (let ((current-line-string
-		 (buffer-substring-no-properties
-		  (line-beginning-position)
-		  (line-end-position))))
-	    (let ((button (apply
-			   button-func
-			   (list current-line-string))))
-	      (if button
-		  (push button buttons))))
+	  (when-let ((current-line-string
+		      (buffer-substring-no-properties
+		       (line-beginning-position) (line-end-position)))
+		     (button (apply button-func (list current-line-string))))
+	    (push button buttons))
 	  (forward-line))))
     buttons))
 
