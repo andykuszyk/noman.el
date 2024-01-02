@@ -137,6 +137,7 @@ l    -  go back to the last subcommand"
       (local-set-key (kbd "n") #'next-line)
       (local-set-key (kbd "p") #'previous-line)
       (local-set-key (kbd "l") #'noman-back)
+      (read-only-mode t)
       (display-buffer buffer))))
 
 (provide 'noman)
