@@ -26,6 +26,7 @@
 ;;;
 ;;; Code:
 (require 'cl-lib)
+(require 'ansi-color)
 
 (defvar noman--last-command nil
   "The last command that noman executed.")
@@ -151,6 +152,7 @@ l    -  go back to the last subcommand"
 	(noman--exec cmd "help" buffer)
 	(replace-regexp-in-region "." "" (point-min) (point-max)))
       (setq noman--buttons (noman--make-buttons buffer cmd))
+      (ansi-color-apply-on-region (point-min) (point-max))
       (goto-char (point-min))
       (local-set-key (kbd "m") #'noman-menu)
       (local-set-key (kbd "g") #'noman-menu)
