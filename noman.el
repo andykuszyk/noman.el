@@ -1,10 +1,11 @@
-;;; noman.el --- read command line help without a man page -*- lexical-binding: t -*-
+;;; noman.el --- Read command line help without a man page -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2024 Andy Kuszyk
 
 ;; Author: Andy Kuszyk <emacs@akuszyk.com>
 ;; URL: https://github.com/andykuszyk/noman.el
 ;; Version: 0.1
+;; Package-Requires: ((emacs "28.1"))
 
 ;; This file is not part of GNU Emacs.
 
@@ -56,9 +57,9 @@
 (defun noman-back ()
   "Go to the previous subcommand."
   (interactive)
-  (if (> (length noman--history) 1)
-    (let ((current-cmd (pop noman--history))
-	  (previous-cmd (pop noman--history)))
+  (when (> (length noman--history) 1)
+    (pop noman--history) ;; pop current command
+    (let ((previous-cmd (pop noman--history)))
       (message previous-cmd)
       (noman previous-cmd))))
 
