@@ -39,3 +39,9 @@ The key-bindings are as follows:
 | ~g~ or ~m~ | Select a subcommand to display      |
 | ~G~        | Run ~noman~ for a different command |
 | ~l~        | Back to the previous subcommand     |
+
+** Known to work with
+- ~kubectl~
+- ~terraform~
+- ~gh~
+- ~aws~
