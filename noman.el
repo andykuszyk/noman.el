@@ -134,6 +134,18 @@ and return a button, or nil.")
 	  (forward-line))))
     buttons))
 
+(defvar-keymap noman-mode-map
+  "m" #'noman-menu
+  "g" #'noman-menu
+  "G" #'noman
+  "q" #'quit-window
+  "n" #'next-line
+  "p" #'previous-line
+  "l" #'noman-back)
+
+(define-derived-mode noman-mode special-mode "noman"
+  "A mode for browsing command line help")
+
 (defun noman (cmd)
   "Attempt to parse comand line help for the command CMD.
 
@@ -157,14 +169,8 @@ l    -  go back to the last subcommand"
       (setq noman--buttons (noman--make-buttons buffer cmd))
       (ansi-color-apply-on-region (point-min) (point-max))
       (goto-char (point-min))
-      (local-set-key (kbd "m") #'noman-menu)
-      (local-set-key (kbd "g") #'noman-menu)
-      (local-set-key (kbd "G") #'noman)
-      (local-set-key (kbd "q") #'quit-window)
-      (local-set-key (kbd "n") #'next-line)
-      (local-set-key (kbd "p") #'previous-line)
-      (local-set-key (kbd "l") #'noman-back)
       (read-only-mode t)
+      (noman-mode)
       (display-buffer buffer))))
 
 (provide 'noman)
