@@ -1,4 +1,4 @@
-;;; noman.el --- Read command line help without a man page -*- lexical-binding: t -*-
+;;; noman.el --- Read command line help without a man page -*- lexical-binding:t; ispell-buffer-session-localwords: ("noman" "subcommand" "subcommands"); -*-
 
 ;; Copyright (C) 2024 Andy Kuszyk
 
@@ -93,7 +93,7 @@
 (defvar noman-parsing-functions
   '(("aws" . noman--make-aws-button))
   "Custom parsing functions to use for specific commands.
-pEach function should take a single string containing a line of text,
+Each function should take a single string containing a line of text,
 and return a button, or nil.")
 
 (defun noman--make-default-button (line)
@@ -144,10 +144,10 @@ and return a button, or nil.")
   "l" #'noman-back)
 
 (define-derived-mode noman-mode special-mode "noman"
-  "A mode for browsing command line help")
+  "A mode for browsing command line help.")
 
 (defun noman (cmd)
-  "Attempt to parse comand line help for the command CMD.
+  "Attempt to parse command line help for the command CMD.
 
 Noman (no-man) has similar keybindings to man:
 
