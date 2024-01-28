@@ -34,7 +34,7 @@
 (defvar noman--last-command nil
   "The last command that noman executed.")
 
-(defvar noman--buttons '()
+(defvar-local noman--buttons '()
   "A list of buttons in the current noman buffer.")
 
 (defvar noman--history '()
@@ -156,7 +156,6 @@ G    -  view help for a different command
 l    -  go back to the last subcommand"
   (interactive "MCommand: ")
   (setq noman--last-command cmd)
-  (setq noman--buttons '())
   (push cmd noman--history)
   (let ((buffer (get-buffer-create (format "*noman %s*" cmd)))
 	(inhibit-read-only t))
@@ -166,11 +165,11 @@ l    -  go back to the last subcommand"
 	(erase-buffer)
 	(noman--exec cmd "help" buffer)
 	(replace-regexp-in-region "." "" (point-min) (point-max)))
-      (setq noman--buttons (noman--make-buttons buffer cmd))
       (ansi-color-apply-on-region (point-min) (point-max))
-      (goto-char (point-min))
       (read-only-mode t)
       (noman-mode)
+      (setq noman--buttons (noman--make-buttons buffer cmd))
+      (goto-char (point-min))
       (display-buffer buffer))))
 
 (provide 'noman)
