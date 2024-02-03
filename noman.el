@@ -71,12 +71,7 @@
 
 (defun noman--exec (cmd suffix buffer)
   "Execute CMD with the help SUFFIX and place the results in BUFFER."
-  (let ((cmd-and-options (split-string cmd " ")))
-    (apply 'call-process
-	   (append
-	    (list (nth 0 cmd-and-options) nil buffer nil)
-	    (nthcdr 1 cmd-and-options)
-	    (list suffix)))))
+  (call-process "sh" nil buffer nil "-c" (concat cmd " " suffix)))
 
 (defun noman--make-aws-button (line)
   "Parse the string LINE for an aws-style command."
