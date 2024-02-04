@@ -32,15 +32,32 @@
   (let ((name (make-temp-file "kubectl")))
     (f-write-text "
 #!/bin/bash
-echo \"hello world\"
-" 'utf-8-emacs name)
+echo '
+kubectl controls the Kubernetes cluster manager.
+
+ Find more information at: https://kubernetes.io/docs/reference/kubectl/
+
+Basic Commands (Beginner):
+  create          Create a resource from a file or from stdin
+  expose          Take a replication controller, service, deployment or pod and expose it as a new Kubernetes service
+  run             Run a particular image on the cluster
+  set             Set specific features on objects
+'" 'utf-8-emacs name)
     (chmod name #o777)
     (message name)
     name))
 
 (ert-deftest noman-should-parse-kubectl ()
-  (noman (make-kubectl)))
-
+  (let* ((kubectl (make-kubectl))
+	(buffer (format "*noman %s*" kubectl)))
+    (noman kubectl)
+    (with-current-buffer (get-buffer buffer)
+      (should (string-equal buffer (buffer-name)))
+      (should (> (point-max) 0))
+      (should
+       (string-match-p
+	(regexp-quote "kubectl controls the Kubernetes")
+	(buffer-substring-no-properties (point-min) (point-max)))))))
 
 (provide 'test-noman)
 ;;; test-noman.el ends here
