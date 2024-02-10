@@ -30,9 +30,9 @@
 
 (defun make-kubectl ()
   (let ((name (make-temp-file "kubectl")))
-    (f-write-text "
-#!/bin/bash
-echo '
+    (f-write-text "#!/bin/bash
+if [[ \"$1\" == \"--help\" ]]; then
+    echo '
 kubectl controls the Kubernetes cluster manager.
 
  Find more information at: https://kubernetes.io/docs/reference/kubectl/
@@ -42,7 +42,32 @@ Basic Commands (Beginner):
   expose          Take a replication controller, service, deployment or pod and expose it as a new Kubernetes service
   run             Run a particular image on the cluster
   set             Set specific features on objects
-'" 'utf-8-emacs name)
+'
+fi
+
+if [[ \"$1\" == \"create\" ]]; then
+    echo '
+Create a resource from a file or from stdin.
+
+ JSON and YAML formats are accepted.
+
+Examples:
+  # Create a pod using the data in pod.json
+  kubectl create -f ./pod.json
+  
+  # Create a pod based on the JSON passed into stdin
+  cat pod.json | kubectl create -f -
+  
+  # Edit the data in registry.yaml in JSON then create the resource using the edited data
+  kubectl create -f registry.yaml --edit -o json
+
+Available Commands:
+  clusterrole           Create a cluster role
+  clusterrolebinding    Create a cluster role binding for a particular cluster role
+  configmap             Create a config map from a local file, directory or literal value
+'
+fi
+" 'utf-8-emacs name)
     (chmod name #o777)
     (message name)
     name))
@@ -69,10 +94,17 @@ Basic Commands (Beginner):
 
 (ert-deftest noman-should-parse-kubectl-subcommands ()
   (let* ((kubectl (make-kubectl))
-	 (buffer (format "*noman %s*" kubectl)))
+	 (buffer (format "*noman %s*" kubectl))
+	 (create-buffer (format "*noman %s create*" kubectl)))
     (noman kubectl)
     (with-current-buffer (get-buffer buffer)
-      )))
+      (noman-menu "create")
+      (with-current-buffer (get-buffer create-buffer)
+	(should
+	 (string-match-p
+	  (regexp-quote "Create a resource from a file or from stdin.")
+	  (buffer-substring-no-properties (point-min) (point-max))))
+	(should (= (count-buttons) 3))))))
 
 (provide 'test-noman)
 ;;; test-noman.el ends here
