@@ -47,9 +47,16 @@ Basic Commands (Beginner):
     (message name)
     name))
 
+(defun count-buttons ()
+  (goto-char (point-min))
+  (let ((count 0))
+    (while (forward-button 1 nil nil t)
+      (setq count (+ count 1)))
+    count))
+
 (ert-deftest noman-should-parse-kubectl ()
   (let* ((kubectl (make-kubectl))
-	(buffer (format "*noman %s*" kubectl)))
+	 (buffer (format "*noman %s*" kubectl)))
     (noman kubectl)
     (with-current-buffer (get-buffer buffer)
       (should (string-equal buffer (buffer-name)))
@@ -57,7 +64,15 @@ Basic Commands (Beginner):
       (should
        (string-match-p
 	(regexp-quote "kubectl controls the Kubernetes")
-	(buffer-substring-no-properties (point-min) (point-max)))))))
+	(buffer-substring-no-properties (point-min) (point-max))))
+      (should (= (count-buttons) 4)))))
+
+(ert-deftest noman-should-parse-kubectl-subcommands ()
+  (let* ((kubectl (make-kubectl))
+	 (buffer (format "*noman %s*" kubectl)))
+    (noman kubectl)
+    (with-current-buffer (get-buffer buffer)
+      )))
 
 (provide 'test-noman)
 ;;; test-noman.el ends here
