@@ -166,9 +166,9 @@ l    -  go back to the last subcommand"
        ((string-suffix-p " not found" cmdtype)
         (user-error "Command '%s' not found" cmdprefix))
        (t
-        (unless (= (noman--exec cmd "--help" buffer) 0)
+        (unless (= (noman--exec cmd "--help" `(,buffer nil)) 0)
           (erase-buffer)
-          (noman--exec cmd "help" buffer)
+          (noman--exec cmd "help" `(,buffer nil))
           (replace-regexp-in-region "." "" (point-min) (point-max)))))
       (ansi-color-apply-on-region (point-min) (point-max))
       (read-only-mode t)
