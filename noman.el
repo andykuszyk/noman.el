@@ -150,7 +150,7 @@ Noman (no-man) has similar keybindings to man:
 g/m  -  jump to a subcommand
 G    -  view help for a different command
 l    -  go back to the last subcommand"
-  (interactive "MCommand: ")
+  (interactive (list (read-shell-command "Command: ")))
   (setq noman--last-command cmd)
   (push cmd noman--history)
   (let ((buffer (get-buffer-create (format "*noman %s*" cmd)))
