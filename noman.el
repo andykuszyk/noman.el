@@ -157,7 +157,9 @@ l    -  go back to the last subcommand"
         (inhibit-read-only t))
     (with-current-buffer buffer
       (erase-buffer)
-      (unless (= (noman--exec cmd "--help" buffer) 0)
+      (unless (memq (noman--exec cmd "--help" buffer) '(0 2))
+        ;; if exit code is other than 0 or 2 (generally, "misuse of shell
+        ;; builtin"), then try "CMD help" instead.
         (erase-buffer)
         (noman--exec cmd "help" buffer)
         (replace-regexp-in-region "." "" (point-min) (point-max)))
