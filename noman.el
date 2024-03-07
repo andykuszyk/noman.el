@@ -137,7 +137,9 @@ and return a button, or nil.")
   "q" #'quit-window
   "n" #'next-line
   "p" #'previous-line
-  "l" #'noman-back)
+  "l" #'noman-back
+  "TAB" #'forward-button
+  "<backtab>" #'backward-button)
 
 (define-derived-mode noman-mode special-mode "noman"
   "A mode for browsing command line help.")
