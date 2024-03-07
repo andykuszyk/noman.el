@@ -4,7 +4,7 @@
 
 ;; Author: Andy Kuszyk <emacs@akuszyk.com>
 ;; URL: https://github.com/andykuszyk/noman.el
-;; Version: 0.1
+;; Version: 0.2
 ;; Keywords: docs
 ;; Package-Requires: ((emacs "28.1") (compat "29.1"))
 
