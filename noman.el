@@ -169,7 +169,23 @@ l    -  go back to the last subcommand"
         (unless (= (noman--exec cmd "--help" '(t nil)) 0)
           (erase-buffer)
           (noman--exec cmd "help" '(t nil))
-          (replace-regexp-in-region "." "" (point-min) (point-max)))))
+          (replace-regexp-in-region "." "" (point-min) (point-max)))
+        (when-let ((versioninfo
+                    (save-excursion
+                      (with-temp-buffer
+                        (unless (= (noman--exec cmdprefix "--version" '(t nil))
+                                   0)
+                          (erase-buffer)
+                          (noman--exec cmdprefix "version" '(t nil))
+                          (replace-regexp-in-region "." ""
+                                                    (point-min)
+                                                    (point-max)))
+                        (indent-code-rigidly (point-min) (point-max) 4)
+                        (buffer-string))))
+                   (versioninfo-p (not (string= (string-trim versioninfo) ""))))
+          (goto-char (point-max))
+          (insert "\nIMPLEMENTATION\n")
+          (insert versioninfo))))
       (ansi-color-apply-on-region (point-min) (point-max))
       (read-only-mode t)
       (noman-mode)
