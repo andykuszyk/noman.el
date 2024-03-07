@@ -24,6 +24,7 @@
 
 ;;; Code:
 
+(require 'ert)
 (add-to-list 'load-path "../")
 (require 'noman)
 (require 'f)
