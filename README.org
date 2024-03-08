@@ -31,14 +31,16 @@ Noman then tries to run the command with the ~--help~ or ~help~ suffixes, and pa
 
 The key-bindings are as follows:
 
-| Key        | Description                         |
-|------------+-------------------------------------|
-| ~n~        | Next line                           |
-| ~p~        | Previous line                       |
-| ~q~        | Quit the window                     |
-| ~g~ or ~m~ | Select a subcommand to display      |
-| ~G~        | Run ~noman~ for a different command |
-| ~l~        | Back to the previous subcommand     |
+| Key         | Description                         |
+|-------------+-------------------------------------|
+| ~n~         | Next line                           |
+| ~p~         | Previous line                       |
+| ~q~         | Quit the window                     |
+| ~g~ or ~m~  | Select a subcommand to display      |
+| ~G~         | Run ~noman~ for a different command |
+| ~l~         | Back to the previous subcommand     |
+| ~TAB~       | Forward button                      |
+| ~<backtab>~ | Backward button                     |
 
 ** Known to work with
 - ~kubectl~

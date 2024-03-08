@@ -4,9 +4,9 @@
 
 ;; Author: Andy Kuszyk <emacs@akuszyk.com>
 ;; URL: https://github.com/andykuszyk/noman.el
-;; Version: 0.1
+;; Version: 0.2
 ;; Keywords: docs
-;; Package-Requires: ((emacs "28.1"))
+;; Package-Requires: ((emacs "28.1") (compat "29.1"))
 
 ;; This file is not part of GNU Emacs.
 
@@ -137,7 +137,9 @@ and return a button, or nil.")
   "q" #'quit-window
   "n" #'next-line
   "p" #'previous-line
-  "l" #'noman-back)
+  "l" #'noman-back
+  "TAB" #'forward-button
+  "<backtab>" #'backward-button)
 
 (define-derived-mode noman-mode special-mode "noman"
   "A mode for browsing command line help.")
@@ -150,17 +152,42 @@ Noman (no-man) has similar keybindings to man:
 g/m  -  jump to a subcommand
 G    -  view help for a different command
 l    -  go back to the last subcommand"
-  (interactive "MCommand: ")
+  (interactive (list (read-shell-command "Command: ")))
   (setq noman--last-command cmd)
   (push cmd noman--history)
-  (let ((buffer (get-buffer-create (format "*noman %s*" cmd)))
-	(inhibit-read-only t))
+  (let* ((buffer (get-buffer-create (format "*noman %s*" cmd)))
+         (cmdprefix (car (split-string cmd)))
+         (cmdtype (string-trim (shell-command-to-string
+                                (concat "command -V " cmdprefix))))
+         (inhibit-read-only t))
     (with-current-buffer buffer
       (erase-buffer)
-      (unless (= (noman--exec cmd "--help" buffer) 0)
-	(erase-buffer)
-	(noman--exec cmd "help" buffer)
-	(replace-regexp-in-region "." "" (point-min) (point-max)))
+      (cond
+       ((string-suffix-p " is a shell builtin" cmdtype)
+        (noman--exec "help -m" cmd t))
+       ((string-suffix-p " not found" cmdtype)
+        (user-error "Command '%s' not found" cmdprefix))
+       (t
+        (unless (= (noman--exec cmd "--help" '(t nil)) 0)
+          (erase-buffer)
+          (noman--exec cmd "help" '(t nil))
+          (replace-regexp-in-region "." "" (point-min) (point-max)))
+        (when-let ((versioninfo
+                    (save-excursion
+                      (with-temp-buffer
+                        (unless (= (noman--exec cmdprefix "--version" '(t nil))
+                                   0)
+                          (erase-buffer)
+                          (noman--exec cmdprefix "version" '(t nil))
+                          (replace-regexp-in-region "." ""
+                                                    (point-min)
+                                                    (point-max)))
+                        (indent-code-rigidly (point-min) (point-max) 4)
+                        (buffer-string))))
+                   (versioninfo-p (not (string= (string-trim versioninfo) ""))))
+          (goto-char (point-max))
+          (insert "\nIMPLEMENTATION\n")
+          (insert versioninfo))))
       (ansi-color-apply-on-region (point-min) (point-max))
       (read-only-mode t)
       (noman-mode)
