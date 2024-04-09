@@ -32,7 +32,7 @@
 (require 'cl-lib)
 (require 'ansi-color)
 
-(defvar noman--last-command nil
+(defvar-local noman--last-command nil
   "The last command that noman executed.")
 
 (defvar-local noman--buttons '()
@@ -153,7 +153,6 @@ g/m  -  jump to a subcommand
 G    -  view help for a different command
 l    -  go back to the last subcommand"
   (interactive (list (read-shell-command "Command: ")))
-  (setq noman--last-command cmd)
   (push cmd noman--history)
   (let* ((buffer (get-buffer-create (format "*noman %s*" cmd)))
          (cmdprefix (car (split-string cmd)))
@@ -161,6 +160,7 @@ l    -  go back to the last subcommand"
                                 (concat "command -V " cmdprefix))))
          (inhibit-read-only t))
     (with-current-buffer buffer
+      (setq noman--last-command cmd)
       (erase-buffer)
       (cond
        ((string-suffix-p " is a shell builtin" cmdtype)
