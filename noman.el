@@ -6,7 +6,7 @@
 ;; URL: https://github.com/andykuszyk/noman.el
 ;; Version: 0.2
 ;; Keywords: docs
-;; Package-Requires: ((emacs "28.1") (compat "29.1"))
+;; Package-Requires: ((emacs "29.1"))
 
 ;; This file is not part of GNU Emacs.
 

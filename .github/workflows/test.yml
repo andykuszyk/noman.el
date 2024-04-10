@@ -38,7 +38,6 @@ jobs:
       fail-fast: false
       matrix:
         emacs_version:
-          - 28.1
           - 29.1
     steps:
     - uses: purcell/setup-emacs@master
