@@ -160,7 +160,6 @@ l    -  go back to the last subcommand"
                                 (concat "command -V " cmdprefix))))
          (inhibit-read-only t))
     (with-current-buffer buffer
-      (setq noman--last-command cmd)
       (erase-buffer)
       (cond
        ((string-suffix-p " is a shell builtin" cmdtype)
@@ -192,6 +191,7 @@ l    -  go back to the last subcommand"
       (read-only-mode t)
       (noman-mode)
       (setq noman--buttons (noman--make-buttons buffer cmd))
+      (setq noman--last-command cmd)
       (goto-char (point-min))
       (display-buffer buffer))))
 

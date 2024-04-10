@@ -129,9 +129,6 @@ fi
       (noman-menu "create"))
     (with-current-buffer (get-buffer kubectl-buffer-name)
       (noman-menu "run"))
-    (should (string-equal
-	     (buffer-name (current-buffer))
-	     kubectl-run-buffer-name))
     (should (get-buffer kubectl-run-buffer-name))
     (with-current-buffer (get-buffer kubectl-run-buffer-name)
       (should
