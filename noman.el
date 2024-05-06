@@ -152,7 +152,17 @@ Noman (no-man) has similar keybindings to man:
 g/m  -  jump to a subcommand
 G    -  view help for a different command
 l    -  go back to the last subcommand"
-  (interactive (list (read-shell-command "Command: ")))
+  (interactive (let* ((paths (exec-path))
+                      (commands '()))
+                 (dolist (path paths)
+                   (when (file-directory-p path)
+                     (setq commands
+                           (append commands
+                                   (directory-files path t "^[^.].*")))))
+                 (setq commands (seq-filter #'file-executable-p commands))
+                 (setq commands (mapcar #'file-name-nondirectory commands))
+                 (list
+                  (completing-read "Program: " commands nil t))))
   (push cmd noman--history)
   (let* ((buffer (get-buffer-create (format "*noman %s*" cmd)))
          (cmdprefix (car (split-string cmd)))
