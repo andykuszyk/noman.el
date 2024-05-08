@@ -32,33 +32,34 @@
 (require 'cl-lib)
 (require 'ansi-color)
 
-(defvar-local noman--last-command nil
-  "The last command that noman executed.")
+(defgroup noman nil "Command line help reader." :group 'applications :prefix "noman-")
 
-(defvar-local noman--buttons '()
-  "A list of buttons in the current noman buffer.")
+(defcustom noman-parsing-functions
+  '(("aws" . noman--make-aws-button))
+  "Alist of form: ((COMMAND . PARSER)).
+COMMAND is a string matched against the requested command.
+PARSER  is a function which accepts a line of text and returns a button or nil."
+  :type 'alist)
 
-(defvar noman--history '()
-  "The history of recent noman commands.")
+(defvar-local noman--last-command nil "The last command that noman executed.")
+(defvar-local noman--buttons nil "A list of buttons in the current noman buffer.")
+(defvar noman--history nil "History of recent noman commands.")
 
 (defun noman-menu (subcommand)
   "Choose the SUBCOMMAND to view help for."
-  (interactive (list
-		(completing-read
-		 "Sub-command: "
-		 (cl-mapcar #'button-label noman--buttons))))
-  (catch 'noman--button-found
-    (dolist (button noman--buttons)
-      (when (string=
-	     subcommand
-	     (button-label button))
-	(button-activate button)
-	(throw 'noman--button-found t)))))
+  (interactive (list (completing-read "Sub-command: "
+                                      (or (mapcar #'button-label noman--buttons)
+                                          (user-error "No subcommands found")))))
+  (when-let ((button (cl-loop
+                      for b in noman--buttons
+                      thereis (when (string= subcommand (button-label b)) b))))
+    (button-activate button)))
 
 (defun noman-back ()
   "Go to the previous subcommand."
   (interactive)
-  (when (> (length noman--history) 1)
+  (if (not (> (length noman--history) 1))
+      (user-error "End of noman history")
     (pop noman--history) ;; pop current command
     (let ((previous-cmd (pop noman--history)))
       (message previous-cmd)
@@ -69,72 +70,48 @@
   (let ((subcommand (button-label button)))
     (noman (format "%s %s" noman--last-command subcommand))))
 
-(defun noman--exec (cmd suffix buffer)
-  "Execute CMD with the help SUFFIX and place the results in BUFFER."
-  (call-process "sh" nil buffer nil "-c" (concat cmd " " suffix)))
+(defun noman--aws-button (line)
+  "Return button for aws-style command LINE."
+  (when-let ((first-match (string-match "^ +o +\\([A-Za-z0-9\\-]+\\)$" line))
+             (beg (match-beginning 1))
+             (end (match-end 1))
+             (bol (line-beginning-position)))
+    (make-button (+ bol beg) (+ bol end) 'action #'noman--follow-link)))
 
-(defun noman--make-aws-button (line)
-  "Parse the string LINE for an aws-style command."
-  (let ((first-match
-	 (string-match
-	  "^ +o +\\([A-Za-z0-9\\-]+\\)$"
-	  line)))
-    (when first-match
-      (let ((beg (match-beginning 1)) (end (match-end 1)))
-	(make-button
-	 (+ (line-beginning-position) beg)
-	 (+ (line-beginning-position) end)
-	 'action #'noman--follow-link)))))
+(defun noman--button (line)
+  "Return default command LINE button."
+  (when-let  (((string-prefix-p "  " line))
+              (first-match (string-match
+                            "^ +\\([A-Za-z]+[A-Za-z0-9\\-]+\\):* \\{2\\}.*$"
+                            line))
+              (beg (match-beginning 1))
+              (end (match-end 1))
+              (bol (line-beginning-position)))
+    (make-button (+ bol beg) (+ bol end) 'action #'noman--follow-link)))
 
-(defvar noman-parsing-functions
-  '(("aws" . noman--make-aws-button))
-  "Custom parsing functions to use for specific commands.
-Each function should take a single string containing a line of text,
-and return a button, or nil.")
-
-(defun noman--make-default-button (line)
-  "Parse the string LINE for a default command."
-  (when (string-prefix-p "  " line)
-    (let ((first-match
-	   (string-match
-	    "^ +\\([A-Za-z]+[A-Za-z0-9\\-]+\\):* \\{2\\}.*$"
-	    line)))
-      (when first-match
-	(let ((beg (match-beginning 1)) (end (match-end 1)))
-	  (make-button
-	   (+ (line-beginning-position) beg)
-	   (+ (line-beginning-position) end)
-	   'action #'noman--follow-link))))))
-
-(defun noman--get-button-func (cmd)
+(defun noman--button-func (cmd)
   "Gets the function to use for parsing subcommands for the given CMD."
-  (let ((func
-	 (cdr (assoc (nth 0 (split-string cmd " ")) noman-parsing-functions))))
-    (if func
-	func
-      #'noman--make-default-button)))
+  (alist-get (car (split-string cmd " " 'omit-nulls))
+             noman-parsing-functions #'noman--button nil #'string=))
 
-(defun noman--make-buttons (buffer cmd)
-  "Iterates over the lines in a BUFFER, parsing subcommands for CMD as buttons."
-  (let ((buttons (list))
-	(button-func (noman--get-button-func cmd)))
-    (with-current-buffer buffer
+(defun noman--buttonize (cmd)
+  "Evaluate CMD's button function on each line in `current-buffer'.
+Return list of created buttons."
+  (let ((button-func (noman--button-func cmd))
+        (buttons nil))
+    (save-excursion
       (goto-char (point-min))
-      (let ((max-lines (count-lines (point-min) (point-max))))
-	(while (< (line-number-at-pos (point)) (+ max-lines 1))
-	  (when-let ((current-line-string
-		      (buffer-substring-no-properties
-		       (line-beginning-position) (line-end-position)))
-		     (button (apply button-func (list current-line-string))))
-	    (push button buttons))
-	  (forward-line))))
-    buttons))
+      (while (not (eobp))
+        (push (funcall button-func
+                       (buffer-substring (line-beginning-position) (line-end-position)))
+              buttons)
+        (forward-line)))
+    (delq nil buttons)))
 
 (defvar-keymap noman-mode-map
   "m" #'noman-menu
   "g" #'noman-menu
   "G" #'noman
-  "q" #'quit-window
   "n" #'next-line
   "p" #'previous-line
   "l" #'noman-back
@@ -142,68 +119,66 @@ and return a button, or nil.")
   "<backtab>" #'backward-button)
 
 (define-derived-mode noman-mode special-mode "noman"
-  "A mode for browsing command line help.")
+  "Major mode for browsing command line help.
 
-(defun noman (cmd)
-  "Attempt to parse command line help for the command CMD.
+\\{noman-mode-map}")
 
-Noman (no-man) has similar keybindings to man:
-
-g/m  -  jump to a subcommand
-G    -  view help for a different command
-l    -  go back to the last subcommand"
-  (interactive (let* ((paths (exec-path))
-                      (commands '()))
-                 (dolist (path paths)
-                   (when (file-directory-p path)
-                     (setq commands
-                           (append commands
-                                   (directory-files path t "^[^.].*")))))
-                 (setq commands (seq-filter #'file-executable-p commands))
-                 (setq commands (mapcar #'file-name-nondirectory commands))
-                 (list
-                  (completing-read "Program: " commands nil t))))
-  (push cmd noman--history)
-  (let* ((buffer (get-buffer-create (format "*noman %s*" cmd)))
-         (cmdprefix (car (split-string cmd)))
-         (cmdtype (string-trim (shell-command-to-string
-                                (concat "command -V " cmdprefix))))
+(defun noman--buffer (cmd)
+  "Prepare and display noman CMD's noman buffer."
+  (let* ((tokens (split-string cmd))
+         (prefix (car tokens))
+         (type (string-trim (shell-command-to-string (concat "command -V " prefix))))
          (inhibit-read-only t))
-    (with-current-buffer buffer
+    (with-current-buffer (get-buffer-create "*noman*")
       (erase-buffer)
       (cond
-       ((string-suffix-p " is a shell builtin" cmdtype)
-        (noman--exec "help -m" cmd t))
-       ((string-suffix-p " not found" cmdtype)
-        (user-error "Command '%s' not found" cmdprefix))
-       (t
-        (unless (= (noman--exec cmd "--help" '(t nil)) 0)
-          (erase-buffer)
-          (noman--exec cmd "help" '(t nil))
-          (replace-regexp-in-region "." "" (point-min) (point-max)))
-        (when-let ((versioninfo
-                    (save-excursion
-                      (with-temp-buffer
-                        (unless (= (noman--exec cmdprefix "--version" '(t nil))
-                                   0)
-                          (erase-buffer)
-                          (noman--exec cmdprefix "version" '(t nil))
-                          (replace-regexp-in-region "." ""
-                                                    (point-min)
-                                                    (point-max)))
-                        (indent-code-rigidly (point-min) (point-max) 4)
-                        (buffer-string))))
-                   (versioninfo-p (not (string= (string-trim versioninfo) ""))))
-          (goto-char (point-max))
-          (insert "\nIMPLEMENTATION\n")
-          (insert versioninfo))))
+       ((string-suffix-p " is a shell builtin" type)
+        (call-process shell-file-name nil t nil "-c" (format "'%s help -m'" cmd)))
+       ((string-suffix-p " not found" type)
+        (user-error "Command '%s' not found" prefix))
+       (t (unless (= (apply #'call-process prefix nil t nil
+                            `(,@(cdr tokens) "--help"))
+                     0)
+            (erase-buffer)
+            (call-process cmd nil t nil "help")
+            (replace-regexp-in-region "." "" (point-min) (point-max)))
+          (when-let ((versioninfo
+                      (save-excursion
+                        (with-temp-buffer
+                          (unless (= (call-process prefix nil t nil  "--version") 0)
+                            (erase-buffer)
+                            (call-process prefix nil t nil "version")
+                            (replace-regexp-in-region "." "" (point-min) (point-max)))
+                          (indent-code-rigidly (point-min) (point-max) 4)
+                          (buffer-string))))
+                     (versioninfo-p (not (string-empty-p (string-trim versioninfo)))))
+            (goto-char (point-max))
+            (insert "\nIMPLEMENTATION\n")
+            (insert versioninfo))))
       (ansi-color-apply-on-region (point-min) (point-max))
-      (read-only-mode t)
-      (noman-mode)
-      (setq noman--buttons (noman--make-buttons buffer cmd))
-      (setq noman--last-command cmd)
       (goto-char (point-min))
-      (display-buffer buffer))))
+      (unless (derived-mode-p 'noman-mode) (noman-mode))
+      (setq noman--buttons (noman--buttonize cmd)
+            noman--last-command cmd
+            header-line-format (string-join (split-string cmd " ")  " > "))
+      (display-buffer (current-buffer) '(display-buffer-reuse-window)))))
+
+(defun noman--read-cmd ()
+  "Return executable command from user prompt."
+  (cl-loop for path in (cl-loop for p in (exec-path)
+                                append (if (file-directory-p p)
+                                           (directory-files p t "^[^.].*")
+                                         (list p)))
+           when (and  (file-executable-p path))
+           collect (file-name-nondirectory path) into commands
+           finally return (completing-read "Program: " commands nil t)))
+
+;;;###autoload
+(defun noman (cmd)
+  "Return to parsed command line help for the command CMD."
+  (interactive (list (noman--read-cmd)))
+  (noman--buffer cmd)
+  (push cmd noman--history))
 
 (provide 'noman)
 ;;; noman.el ends here
