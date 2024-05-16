@@ -41,18 +41,36 @@ COMMAND is a string matched against the requested command.
 PARSER  is a function which accepts a line of text and returns a button or nil."
   :type 'alist)
 
+(defcustom noman-reuse-buffers
+  t
+  "Controls whether or not a new buffer is created for each noman invocation.
+The default value of t displays all command help in the same buffer named
+  *noman*.
+Any other value results in a new buffer being created for each command, with the
+  name *noman <command>*"
+  :type 'boolean)
+
 (defvar-local noman--last-command nil "The last command that noman executed.")
 (defvar-local noman--buttons nil "A list of buttons in the current noman buffer.")
 (defvar noman--history nil "History of recent noman commands.")
 
 (defun noman-menu (subcommand)
   "Choose the SUBCOMMAND to view help for."
-  (interactive (list (completing-read "Sub-command: "
-                                      (or (mapcar #'button-label noman--buttons)
-                                          (user-error "No subcommands found")))))
-  (when-let ((button (cl-loop
-                      for b in noman--buttons
-                      thereis (when (string= subcommand (button-label b)) b))))
+  (interactive
+   (list
+    (completing-read
+     "Sub-command: "
+     (or (mapcar #'button-label noman--buttons)
+         (user-error "No subcommands found")))))
+  (when-let ((button
+	      (cl-loop
+               for b in noman--buttons
+               thereis
+	       (when
+		   (string=
+		    subcommand
+		    (button-label b))
+		 b))))
     (button-activate button)))
 
 (defun noman-back ()
@@ -72,27 +90,40 @@ PARSER  is a function which accepts a line of text and returns a button or nil."
 
 (defun noman--aws-button (line)
   "Return button for aws-style command LINE."
-  (when-let ((first-match (string-match "^ +o +\\([A-Za-z0-9\\-]+\\)$" line))
-             (beg (match-beginning 1))
-             (end (match-end 1))
-             (bol (line-beginning-position)))
-    (make-button (+ bol beg) (+ bol end) 'action #'noman--follow-link)))
+  (when-let
+      ((first-match
+	(string-match "^ +o +\\([A-Za-z0-9\\-]+\\)$" line))
+       (beg (match-beginning 1))
+       (end (match-end 1))
+       (bol (line-beginning-position)))
+    (make-button
+     (+ bol beg)
+     (+ bol end)
+     'action
+     #'noman--follow-link)))
 
 (defun noman--button (line)
   "Return default command LINE button."
-  (when-let  (((string-prefix-p "  " line))
-              (first-match (string-match
-                            "^ +\\([A-Za-z]+[A-Za-z0-9\\-]+\\):* \\{2\\}.*$"
-                            line))
-              (beg (match-beginning 1))
-              (end (match-end 1))
-              (bol (line-beginning-position)))
-    (make-button (+ bol beg) (+ bol end) 'action #'noman--follow-link)))
+  (when-let
+      (((string-prefix-p "  " line))
+       (first-match
+	(string-match
+         "^ +\\([A-Za-z]+[A-Za-z0-9\\-]+\\):* \\{2\\}.*$"
+         line))
+       (beg (match-beginning 1))
+       (end (match-end 1))
+       (bol (line-beginning-position)))
+    (make-button
+     (+ bol beg)
+     (+ bol end)
+     'action
+     #'noman--follow-link)))
 
 (defun noman--button-func (cmd)
   "Gets the function to use for parsing subcommands for the given CMD."
-  (alist-get (car (split-string cmd " " 'omit-nulls))
-             noman-parsing-functions #'noman--button nil #'string=))
+  (alist-get
+   (car (split-string cmd " " 'omit-nulls))
+   noman-parsing-functions #'noman--button nil #'string=))
 
 (defun noman--buttonize (cmd)
   "Evaluate CMD's button function on each line in `current-buffer'.
@@ -123,13 +154,20 @@ Return list of created buttons."
 
 \\{noman-mode-map}")
 
+(defun noman--generate-buffer-name (cmd)
+  "Generate a buffer name from CMD.
+If noman-reuse-buffers is t, *noman* will always be returned."
+  (if noman-reuse-buffers
+      "*noman*"
+    (format "*noman %s*" cmd)))
+
 (defun noman--buffer (cmd)
   "Prepare and display noman CMD's noman buffer."
   (let* ((tokens (split-string cmd))
          (prefix (car tokens))
          (type (string-trim (shell-command-to-string (concat "command -V " prefix))))
          (inhibit-read-only t))
-    (with-current-buffer (get-buffer-create "*noman*")
+    (with-current-buffer (get-buffer-create (noman--generate-buffer-name cmd))
       (erase-buffer)
       (cond
        ((string-suffix-p " is a shell builtin" type)
