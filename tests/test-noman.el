@@ -83,6 +83,10 @@ fi
     (message name)
     name))
 
+(defun noman--test-setup ()
+  (setq noman-reuse-buffers nil)
+  (kill-matching-buffers "\\*noman.*" nil t))
+
 (defun count-buttons ()
   (goto-char (point-min))
   (let ((count 0))
@@ -91,7 +95,7 @@ fi
     count))
 
 (ert-deftest noman-should-parse-kubectl ()
-  (kill-matching-buffers "\\*noman.*" nil t)
+  (noman--test-setup)
   (let* ((kubectl (make-kubectl))
 	 (buffer (format "*noman %s*" kubectl)))
     (noman kubectl)
@@ -105,7 +109,7 @@ fi
       (should (= (count-buttons) 4)))))
 
 (ert-deftest noman-should-parse-kubectl-subcommands ()
-  (kill-matching-buffers "\\*noman.*" nil t)
+  (noman--test-setup)
   (let* ((kubectl (make-kubectl))
 	 (buffer (format "*noman %s*" kubectl))
 	 (create-buffer (format "*noman %s create*" kubectl)))
@@ -120,7 +124,7 @@ fi
 	(should (= (count-buttons) 3))))))
 
 (ert-deftest noman-switching-buffers-should-retain-base-command ()
-  (kill-matching-buffers "\\*noman.*" nil t)
+  (noman--test-setup)
   (let* ((kubectl (make-kubectl))
 	 (kubectl-buffer-name (format "*noman %s*" kubectl))
 	 (kubectl-run-buffer-name (format "*noman %s run*" kubectl)))
@@ -135,6 +139,31 @@ fi
        (string-match-p
 	"Create and run a particular image in a pod."
 	(buffer-substring-no-properties (point-min) (point-max)))))))
+
+(ert-deftest noman-with-prefix-arg-allows-shell-built-ins ()
+  (let* ((type-buffer-name "*noman type*"))
+    (noman--test-setup)
+    (universal-argument)
+    (noman "type")
+    (should (get-buffer type-buffer-name))
+    (with-current-buffer (get-buffer type-buffer-name)
+      (should
+       (string-match-p
+	"type - Display information about command type."
+	(buffer-substring-no-properties (point-min) (point-max)))))))
+
+(ert-deftest noman-without-prefix-arg-does-not-allow-built-in ()
+  (let* ((type-buffer-name "*noman type*"))
+    (noman--test-setup)
+    (universal-argument)
+    (noman "type")
+    (should (get-buffer type-buffer-name))
+    (with-current-buffer (get-buffer type-buffer-name)
+      (should
+       (not
+	(string-match-p
+	"type - Display information about command type."
+	 (buffer-substring-no-properties (point-min) (point-max))))))))
 
 (provide 'test-noman)
 ;;; test-noman.el ends here
