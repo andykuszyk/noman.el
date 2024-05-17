@@ -141,7 +141,8 @@ fi
 	(buffer-substring-no-properties (point-min) (point-max)))))))
 
 (ert-deftest noman-with-prefix-arg-allows-shell-built-ins ()
-  (let* ((type-buffer-name "*noman type*"))
+  (let* ((type-buffer-name "*noman type*")
+	 (noman-shell-file-name "/bin/bash"))
     (noman--test-setup)
     (universal-argument)
     (noman "type")
@@ -155,7 +156,6 @@ fi
 (ert-deftest noman-without-prefix-arg-does-not-allow-built-in ()
   (let* ((type-buffer-name "*noman type*"))
     (noman--test-setup)
-    (universal-argument)
     (noman "type")
     (should (get-buffer type-buffer-name))
     (with-current-buffer (get-buffer type-buffer-name)

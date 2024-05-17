@@ -50,6 +50,12 @@ Any other value results in a new buffer being created for each command, with the
   name *noman <command>*"
   :type 'boolean)
 
+(defcustom noman-shell-file-name
+  nil
+  "An override for the default `shell-file-name'.
+If set, this value will used when displaying help for shell built-in commands."
+  :type 'string)
+
 (defvar-local noman--last-command nil "The last command that noman executed.")
 (defvar-local noman--buttons nil "A list of buttons in the current noman buffer.")
 (defvar noman--history nil "History of recent noman commands.")
@@ -171,7 +177,11 @@ If noman-reuse-buffers is t, *noman* will always be returned."
       (erase-buffer)
       (cond
        ((string-suffix-p " is a shell builtin" type)
-        (call-process shell-file-name nil t nil "-c" (format "'%s help -m'" cmd)))
+	(message "shell built in")
+	(call-process
+	 (if noman-shell-file-name
+	     noman-shell-file-name
+	   shell-file-name) nil t nil "-c" (format "'help -m %s'" cmd)))
        ((string-suffix-p " not found" type)
         (user-error "Command '%s' not found" prefix))
        (t (unless (= (apply #'call-process prefix nil t nil
