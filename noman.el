@@ -178,10 +178,13 @@ If noman-reuse-buffers is t, *noman* will always be returned."
       (cond
        ((string-suffix-p " is a shell builtin" type)
 	(message "shell built in")
-	(call-process
-	 (if noman-shell-file-name
-	     noman-shell-file-name
-	   shell-file-name) nil t nil "-c" (format "'help -m %s'" cmd)))
+	(shell-command
+	 (format
+	  "%s -c 'help -m %s'"
+	  (if noman-shell-file-name noman-shell-file-name shell-file-name)
+	  cmd)
+	 (current-buffer)
+	 nil))
        ((string-suffix-p " not found" type)
         (user-error "Command '%s' not found" prefix))
        (t (unless (= (apply #'call-process prefix nil t nil
