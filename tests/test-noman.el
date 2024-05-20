@@ -83,6 +83,44 @@ fi
     (message name)
     name))
 
+(defun make-aws ()
+  (let ((name (make-temp-file "aws")))
+    (f-write-text "#!/bin/bash
+if [[ \"$1\" == \"--help\" ]]; then
+    exit 252
+fi
+if [[ \"$1\" == \"help\" ]]; then
+    echo '
+AWS()                                                                    AWS()
+
+NAME
+       aws -
+
+DESCRIPTION
+       The  AWS  Command  Line  Interface is a unified tool to manage your AWS
+       services.
+
+AVAILABLE SERVICES
+       o accessanalyzer
+
+       o account
+
+       o acm
+
+       o acm-pca
+'
+fi
+
+if [[ \"$1\" == \"rds\" && \"$2\" == \"help\" ]]; then
+    echo '
+TODO aws rds help output here
+'
+fi
+" 'utf-8-emacs name)
+    (chmod name #o777)
+    (message name)
+    name))
+
 (defun noman--test-setup ()
   (setq noman-reuse-buffers nil)
   (kill-matching-buffers "\\*noman.*" nil t))
@@ -93,6 +131,21 @@ fi
     (while (forward-button 1 nil nil t)
       (setq count (+ count 1)))
     count))
+
+(ert-deftest noman-should-parse-aws ()
+  (noman--test-setup)
+  (let* ((aws (make-aws))
+	 (buffer (format "*noman %s*" aws)))
+    (add-to-list 'noman-parsing-functions (list aws . #'noman--make-aws-button))
+    (noman aws)
+    (with-current-buffer (get-buffer buffer)
+      (should (string-equal buffer (buffer-name)))
+      (should (> (point-max) 0))
+      (should
+       (string-match-p
+	(regexp-quote "The  AWS  Command  Line  Interface is a unified tool")
+	(buffer-substring-no-properties (point-min) (point-max))))
+      (should (= (count-buttons) 4)))))
 
 (ert-deftest noman-should-parse-kubectl ()
   (noman--test-setup)
