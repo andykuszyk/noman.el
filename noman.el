@@ -94,7 +94,7 @@ If set, this value will used when displaying help for shell built-in commands."
   (let ((subcommand (button-label button)))
     (noman (format "%s %s" noman--last-command subcommand))))
 
-(defun noman--aws-button (line)
+(defun noman--make-aws-button (line)
   "Return button for aws-style command LINE."
   (when-let
       ((first-match
