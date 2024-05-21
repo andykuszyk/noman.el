@@ -110,6 +110,29 @@ AVAILABLE SERVICES
        o acm-pca
 '
 fi
+if [[ \"$1\" == \"rds\" && \"$2\" == \"help\" ]]; then
+echo '
+RDS()                                                                    RDS()
+
+NAME
+       rds -
+
+DESCRIPTION
+       Amazon  Relational  Database Service (Amazon RDS) is a web service that
+       makes it easier to set up, operate, and scale a relational database  in
+       the  cloud.  It provides cost-efficient, resizeable capacity for an in-
+       dustry-standard relational database and manages common database  admin-
+       istration tasks, freeing up developers to focus on what makes their ap-
+       plications and businesses unique.
+
+AVAILABLE COMMANDS
+       o add-option-to-option-group
+
+       o add-role-to-db-cluster
+
+       o add-role-to-db-instance
+'
+fi
 " 'utf-8-emacs name)
     (chmod name #o777)
     (message name)
@@ -140,6 +163,21 @@ fi
 	(regexp-quote "The  AWS  Command  Line  Interface is a unified tool")
 	(buffer-substring-no-properties (point-min) (point-max))))
       (should (= (count-buttons) 4)))))
+
+(ert-deftest noman-should-parse-aws-subcommands ()
+  (noman--test-setup)
+  (let* ((aws (make-aws))
+	 (buffer (format "*noman %s*" aws))
+	 (rds-buffer (format "*noman %s rds*" aws)))
+    (noman aws)
+    (with-current-buffer (get-buffer buffer)
+      (noman-menu "rds")
+      (with-current-buffer (get-buffer rds-buffer)
+	(should
+	 (string-match-p
+	  (regexp-quote "Amazon  Relational  Database Service (Amazon RDS).")
+	  (buffer-substring-no-properties (point-min) (point-max))))
+	(should (= (count-buttons) 3))))))
 
 (ert-deftest noman-should-parse-kubectl ()
   (noman--test-setup)
