@@ -29,7 +29,7 @@ When prompted for a command, enter a program in your ~PATH~, e.g. ~kubectl~.
 
 Noman then tries to run the command with the ~--help~ or ~help~ suffixes, and parse the output. Parsing the output simply involves looking for subcommands, and turning them into links for subsequent invocations of ~noman~.
 
-The key-bindings are as follows:
+The default key-bindings are as follows:
 
 | Key         | Description                         |
 |-------------+-------------------------------------|
@@ -42,6 +42,30 @@ The key-bindings are as follows:
 | ~TAB~       | Forward button                      |
 | ~<backtab>~ | Backward button                     |
 
+** Shell built-ins
+Noman also supports displaying help for shell built-in commands using a prefix argument:
+
+#+begin_src
+C-u M-x noman RET
+#+end_src
+
+By default, Noman will use your system shell for this. If you want to use a different shell, you can customise the ~noman-shell-file-name~ variable:
+
+#+begin_src elisp
+(setq noman-shell-file-name "/bin/bash")
+#+end_src
+** Customisation
+*** Custom parsing functions
+Custom parsing functions can be added to ~noman-parsing-functions~ to add support for programs whose help does not work with Noman out-of-the-box. For an example of how this works, you can read how the AWS CLI is supported:
+
+#+begin_src elisp
+(add-to-list 'noman-parsing-functions '("aws" . noman--make-aws-button))
+#+end_src
+*** Re-using buffers
+By default, Noman will open all help pages in the same buffer called ~*noman*~. If you would prefer different buffers for each help page, you can set the ~noman-reuse-buffers~ variable"
+#+begin_src elisp
+(setq noman-reuse-buffers nil)
+#+end_src
 ** Known to work with
 - ~kubectl~
 - ~terraform~
