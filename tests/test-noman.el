@@ -209,7 +209,7 @@ fi
       (should
        (not
 	(string-match-p
-	"type - Display information about command type."
+	 "type - Display information about command type."
 	 (buffer-substring-no-properties (point-min) (point-max))))))))
 
 (provide 'test-noman)

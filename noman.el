@@ -228,7 +228,7 @@ If noman-reuse-buffers is t, *noman* will always be returned."
 (defun noman (cmd)
   "Display command line help for CMD.
 If any prefix argument is used, and command (including shell built-ins) can be
-provided. Otherwise, an executable program from PATH will be prompted for."
+provided.  Otherwise, an executable program from PATH will be prompted for."
   (interactive
    (if current-prefix-arg
        (list (read-string "Command: "))
