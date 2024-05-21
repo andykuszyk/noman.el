@@ -71,3 +71,7 @@ By default, Noman will open all help pages in the same buffer called ~*noman*~. 
 - ~terraform~
 - ~gh~
 - ~aws~
+** Contributions
+Contributions are very welcome! Please feel free to fork this repo and raise a PR. If you make a significant change that isn't already covered by the existing tests, please also consider adding new test cases.
+
+Tests are written using ~ert~, and can either be run directing using ~M-x ert RET~, or from a shell with ~make test~.
