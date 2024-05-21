@@ -62,7 +62,7 @@ Custom parsing functions can be added to ~noman-parsing-functions~ to add suppor
 (add-to-list 'noman-parsing-functions '("aws" . noman--make-aws-button))
 #+end_src
 *** Re-using buffers
-By default, Noman will open all help pages in the same buffer called ~*noman*~. If you would prefer different buffers for each help page, you can set the ~noman-reuse-buffers~ variable"
+By default, Noman will open all help pages in the same buffer called ~*noman*~. If you would prefer different buffers for each help page, you can set the ~noman-reuse-buffers~ variable:
 #+begin_src elisp
 (setq noman-reuse-buffers nil)
 #+end_src
