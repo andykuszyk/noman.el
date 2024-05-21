@@ -110,12 +110,6 @@ AVAILABLE SERVICES
        o acm-pca
 '
 fi
-
-if [[ \"$1\" == \"rds\" && \"$2\" == \"help\" ]]; then
-    echo '
-TODO aws rds help output here
-'
-fi
 " 'utf-8-emacs name)
     (chmod name #o777)
     (message name)
@@ -136,7 +130,7 @@ fi
   (noman--test-setup)
   (let* ((aws (make-aws))
 	 (buffer (format "*noman %s*" aws)))
-    (add-to-list 'noman-parsing-functions (list aws . #'noman--make-aws-button))
+    (add-to-list 'noman-parsing-functions `(,aws . noman--make-aws-button))
     (noman aws)
     (with-current-buffer (get-buffer buffer)
       (should (string-equal buffer (buffer-name)))
