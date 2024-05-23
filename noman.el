@@ -180,7 +180,7 @@ If noman-reuse-buffers is t, *noman* will always be returned."
 	(message "shell built in")
 	(shell-command
 	 (format
-	  "%s -c 'help -m %s'"
+	  "%s -c 'help %s'"
 	  (if noman-shell-file-name noman-shell-file-name shell-file-name)
 	  cmd)
 	 (current-buffer)

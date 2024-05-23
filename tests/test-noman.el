@@ -235,7 +235,7 @@ fi
     (with-current-buffer (get-buffer type-buffer-name)
       (should
        (string-match-p
-	"type - Display information about command type."
+	"type: type \\[.*\\] name \\[name.*\\]"
 	(buffer-substring-no-properties (point-min) (point-max)))))))
 
 (ert-deftest noman-without-prefix-arg-does-not-allow-built-in ()
@@ -247,7 +247,7 @@ fi
       (should
        (not
 	(string-match-p
-	 "type - Display information about command type."
+	 "type: type \\[.*\\] name \\[name.*\\]"
 	 (buffer-substring-no-properties (point-min) (point-max))))))))
 
 (provide 'test-noman)
