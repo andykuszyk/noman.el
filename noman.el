@@ -187,12 +187,21 @@ If noman-reuse-buffers is t, *noman* will always be returned."
 	 nil))
        ((string-suffix-p " not found" type)
         (user-error "Command '%s' not found" prefix))
-       (t (unless (= (apply #'call-process prefix nil t nil
-                            `(,@(cdr tokens) "--help"))
+       (t (unless (= (apply #'call-process
+			    prefix
+			    nil
+			    t
+			    nil
+			    `(,@(cdr tokens) "--help"))
                      0)
             (erase-buffer)
-            (call-process cmd nil t nil "help")
-            (replace-regexp-in-region "." "" (point-min) (point-max)))
+	    (apply #'call-process
+		   prefix
+		   nil
+		   t
+		   nil
+		   `(,@(cdr tokens) "help"))
+	    (replace-regexp-in-region "." "" (point-min) (point-max)))
           (when-let ((versioninfo
                       (save-excursion
                         (with-temp-buffer

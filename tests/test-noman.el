@@ -107,10 +107,10 @@ AVAILABLE SERVICES
 
        o acm
 
-       o acm-pca
+       o rds
 '
 fi
-if [[ \"$1\" == \"rds\" && \"$2\" == \"help\" ]]; then
+if [[ \"$1\" == \"rds\" ]]; then
 echo '
 RDS()                                                                    RDS()
 
@@ -172,7 +172,9 @@ fi
     (noman aws)
     (with-current-buffer (get-buffer buffer)
       (noman-menu "rds")
+      (should (get-buffer rds-buffer))
       (with-current-buffer (get-buffer rds-buffer)
+	(should (string-equal buffer (buffer-name)))
 	(should
 	 (string-match-p
 	  (regexp-quote "Amazon  Relational  Database Service (Amazon RDS).")
