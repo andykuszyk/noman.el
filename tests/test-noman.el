@@ -110,7 +110,10 @@ AVAILABLE SERVICES
        o rds
 '
 fi
-if [[ \"$1\" == \"rds\" ]]; then
+if [[ \"$1\" == \"rds\" && \"$2\" == \"--help\" ]]; then
+    exit 252
+fi
+if [[ \"$1\" == \"rds\" && \"$2\" == \"help\" ]]; then
 echo '
 RDS()                                                                    RDS()
 
@@ -169,15 +172,16 @@ fi
   (let* ((aws (make-aws))
 	 (buffer (format "*noman %s*" aws))
 	 (rds-buffer (format "*noman %s rds*" aws)))
+    (add-to-list 'noman-parsing-functions `(,aws . noman--make-aws-button))
     (noman aws)
     (with-current-buffer (get-buffer buffer)
       (noman-menu "rds")
       (should (get-buffer rds-buffer))
       (with-current-buffer (get-buffer rds-buffer)
-	(should (string-equal buffer (buffer-name)))
+	(should (string-equal rds-buffer (buffer-name)))
 	(should
 	 (string-match-p
-	  (regexp-quote "Amazon  Relational  Database Service (Amazon RDS).")
+	  (regexp-quote "Amazon  Relational  Database Service (Amazon RDS)")
 	  (buffer-substring-no-properties (point-min) (point-max))))
 	(should (= (count-buttons) 3))))))
 
