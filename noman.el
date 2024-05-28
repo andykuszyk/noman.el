@@ -171,7 +171,10 @@ If noman-reuse-buffers is t, *noman* will always be returned."
   "Prepare and display noman CMD's noman buffer."
   (let* ((tokens (split-string cmd))
          (prefix (car tokens))
-         (type (string-trim (shell-command-to-string (concat "command -V " prefix))))
+         (type (string-trim (shell-command-to-string
+			     (concat
+			      "command -V "
+			      (shell-quote-argument prefix)))))
          (inhibit-read-only t))
     (with-current-buffer (get-buffer-create (noman--generate-buffer-name cmd))
       (erase-buffer)
@@ -182,7 +185,7 @@ If noman-reuse-buffers is t, *noman* will always be returned."
 	 (format
 	  "%s -c 'help %s'"
 	  (if noman-shell-file-name noman-shell-file-name shell-file-name)
-	  cmd)
+	  (shell-quote-argument cmd))
 	 (current-buffer)
 	 nil))
        ((string-suffix-p " not found" type)
