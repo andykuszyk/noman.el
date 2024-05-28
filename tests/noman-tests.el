@@ -1,4 +1,4 @@
-;;; test-noman.el --- tests for the noman package    -*- lexical-binding: t; -*-
+;;; noman-tests.el --- tests for the noman package    -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2024  
 
