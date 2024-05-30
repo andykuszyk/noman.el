@@ -141,6 +141,45 @@ fi
     (message name)
     name))
 
+(defun make-npm ()
+  (let ((name (make-temp-file "npm")))
+    (f-write-text "#!/bin/bash
+if [[ \"$1\" == \"--help\" ]]; then
+    echo '
+npm <command>
+
+Usage:
+
+npm install        install all the dependencies in your project
+npm install <foo>  add the <foo> dependency to your project
+
+All commands:
+
+    access, adduser, audit, bugs, cache, ci, completion,
+    config, dedupe, deprecate, diff, dist-tag, docs, doctor,
+'
+fi
+
+if [[ \"$1\" == \"access\" ]]; then
+    echo '
+=NPM-ACCESS(1)                                                               NPM-ACCESS(1)
+
+NAME
+       npm-access - Set access level on published packages
+
+   See Also
+       •   libnpmaccess ⟨https://npm.im/libnpmaccess⟩
+
+       •   npm help team
+
+       •   npm help publish
+'
+fi
+" 'utf-8-emacs name)
+    (chmod name #o777)
+    (message name)
+    name))
+
 (defun noman--test-setup ()
   (setq noman-reuse-buffers nil)
   (kill-matching-buffers "\\*noman.*" nil t))
@@ -230,6 +269,35 @@ fi
        (string-match-p
 	"Create and run a particular image in a pod."
 	(buffer-substring-no-properties (point-min) (point-max)))))))
+
+(ert-deftest noman-should-parse-npm ()
+  (noman--test-setup)
+  (let* ((npm (make-npm))
+	 (buffer (format "*noman %s*" npm)))
+    (add-to-list 'noman-parsing-functions `(,npm . noman--make-npm-button))
+    (noman npm)
+    (with-current-buffer (get-buffer buffer)
+      (should (string-equal buffer (buffer-name)))
+      (should (> (point-max) 0))
+      (should (search-forward "npm <command>" nil t 1))
+      (should (= (count-buttons) 14)))))
+
+(ert-deftest noman-should-parse-npm-subcommands ()
+  (noman--test-setup)
+  (let* ((npm (make-npm))
+	 (buffer (format "*noman %s*" npm))
+	 (access-buffer (format "*noman %s access*" npm)))
+    (add-to-list 'noman-parsing-functions `(,npm . noman--make-npm-button))
+    (noman npm)
+    (with-current-buffer (get-buffer buffer)
+      (noman-menu "access")
+      (should (get-buffer access-buffer))
+      (with-current-buffer (get-buffer access-buffer)
+	(should (string-equal access-buffer (buffer-name)))
+	(should
+         (search-forward
+          "npm-access - Set access level on published packages" nil t 1))
+	(should (= (count-buttons) 2))))))
 
 (ert-deftest noman-with-prefix-arg-allows-shell-built-ins ()
   (let* ((type-buffer-name "*noman type*")
