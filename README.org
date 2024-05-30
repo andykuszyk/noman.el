@@ -1,3 +1,5 @@
+[[https://melpa.org/#/noman][file:https://melpa.org/packages/noman-badge.svg]]
+
 * Noman
 Noman (pronounced no-man) is a small package that tries to parse the help output from command line programs into an easy-to-navigate Emacs user interface.
 
@@ -10,14 +12,17 @@ This package aims to make the experience of browsing command line help more plea
 [[./screencast.gif]]
 
 ** Installation
-Noman isn't on MELPA yet, but it can be installed directly from this repo. First, clone the repo:
-#+begin_src bash :results none
-git clone https://github.com/andykuszyk/noman.el ~/noman.el
+Noman is on MELPA so you can install it directly with:
+
+#+begin_src
+M-x package-refresh-contents RET
+M-x package-install RET noman RET
 #+end_src
-Then, add it to your load path:
-#+begin_src elisp :results none
-(add-to-list 'load-path "~/noman.el")
-(require 'noman)
+
+If you use ~use-package~, you could also install Noman with:
+
+#+begin_src elisp
+(use-package noman :ensure t)
 #+end_src
 
 ** Usage
