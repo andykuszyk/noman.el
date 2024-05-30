@@ -7,6 +7,8 @@ Neither of these programs ships with ~man~ pages, or similar offline documentati
 
 This package aims to make the experience of browsing command line help more pleasant.
 
+[[./screencast.gif]]
+
 ** Installation
 Noman isn't on MELPA yet, but it can be installed directly from this repo. First, clone the repo:
 #+begin_src bash :results none
