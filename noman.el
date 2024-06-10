@@ -1,4 +1,4 @@
-;;; noman.el --- Read command line help without a man page -*- lexical-binding:t; ispell-buffer-session-localwords: ("noman" "subcommand" "subcommands"); -*-
+;;; noman.el --- Read command line help without a man page -*- lexical-binding:t; ispell-buffer-session-localwords: ("noman" "subcommand" "subcommands" "npm"); -*-
 
 ;; Copyright (C) 2024 Andy Kuszyk
 
