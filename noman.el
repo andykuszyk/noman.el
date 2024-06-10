@@ -35,11 +35,14 @@
 (defgroup noman nil "Command line help reader." :group 'applications :prefix "noman-")
 
 (defcustom noman-parsing-functions
-  '(("aws" . noman--make-aws-button))
+  '(("aws" . noman--make-aws-button)
+    ("npm" . noman--make-npm-button)
+    ("go"  . noman--make-go-button))
   "Alist of form: ((COMMAND . PARSER)).
 COMMAND is a string matched against the requested command.
 PARSER  is a function which accepts a line of text and returns a button or nil."
-  :type 'alist)
+  :type '(repeat (cons (string :tag "Command")
+                       (symbol :tag "Function"))))
 
 (defcustom noman-reuse-buffers
   t
@@ -55,6 +58,18 @@ Any other value results in a new buffer being created for each command, with the
   "An override for the default `shell-file-name'.
 If set, this value will used when displaying help for shell built-in commands."
   :type 'string)
+
+(defcustom noman-help-format
+  '(("npm" (command "help" args))
+    ("go" (command "help" args)))
+  "Control how help is called for subcommands.
+COMMAND is replaced with the main command.
+ARGS is replaced with arguments for subcommand help.
+Strings are interpreted as is."
+  :type '(repeat (list (string :tag "Command")
+                       (repeat (choice (const command)
+                                       (const args)
+                                       string)))))
 
 (defvar-local noman--last-command nil "The last command that noman executed.")
 (defvar-local noman--buttons nil "A list of buttons in the current noman buffer.")
@@ -94,36 +109,39 @@ If set, this value will used when displaying help for shell built-in commands."
   (let ((subcommand (button-label button)))
     (noman (format "%s %s" noman--last-command subcommand))))
 
-(defun noman--make-aws-button (line)
+(defun noman--make-aws-button (&rest _)
   "Return button for aws-style command LINE."
-  (when-let
-      ((first-match
-	(string-match "^ +o +\\([A-Za-z0-9\\-]+\\)$" line))
-       (beg (match-beginning 1))
-       (end (match-end 1))
-       (bol (line-beginning-position)))
-    (make-button
-     (+ bol beg)
-     (+ bol end)
-     'action
-     #'noman--follow-link)))
+  (when (looking-at "^ +o +\\([A-Za-z0-9\\-]+\\)$")
+    (list (cons (match-beginning 1) (match-end 1)))))
 
-(defun noman--button (line)
+(defun noman--make-npm-button (&optional subcommand-p)
+  "Return button positions for npm subcommands.
+SUBCOMMAND-P is non-nil when parsing a subcommand."
+  (if subcommand-p
+      (when (looking-at "^       •   npm help \\([a-z-]+\\)")
+        (list (cons (match-beginning 1) (match-end 1))))
+    (if (looking-at-p "^ \\{4\\}[a-z-]+,")
+        (let (res)
+          (while (re-search-forward "\\([a-z-]+\\),?" (line-end-position) t)
+            (push (cons (match-beginning 1) (match-end 1)) res))
+          res))))
+
+(defun noman--make-go-button (&optional subcommand-p)
+  "Return button positions for go subcommands.
+SUBCOMMAND-P is non-nil when parsing a subcommand."
+  (if subcommand-p
+      (when (looking-at-p "^See also: ")
+        (let (res)
+          (while (re-search-forward "go \\([a-z.]+\\)" (line-end-position) t)
+            (push (cons (match-beginning 1) (match-end 1)) res))
+          res))
+    (if (looking-at "^\t\\([a-z.-]+\\)")
+        (list (cons (match-beginning 1) (match-end 1))))))
+
+(defun noman--button (&rest _)
   "Return default command LINE button."
-  (when-let
-      (((string-prefix-p "  " line))
-       (first-match
-	(string-match
-         "^ +\\([A-Za-z]+[A-Za-z0-9\\-]+\\):* \\{2\\}.*$"
-         line))
-       (beg (match-beginning 1))
-       (end (match-end 1))
-       (bol (line-beginning-position)))
-    (make-button
-     (+ bol beg)
-     (+ bol end)
-     'action
-     #'noman--follow-link)))
+  (when (looking-at "^  \\([A-Za-z]+[A-Za-z0-9\\-]+\\):* \\{2\\}.*$")
+    (list (cons (match-beginning 1) (match-end 1)))))
 
 (defun noman--button-func (cmd)
   "Gets the function to use for parsing subcommands for the given CMD."
@@ -135,13 +153,18 @@ If set, this value will used when displaying help for shell built-in commands."
   "Evaluate CMD's button function on each line in `current-buffer'.
 Return list of created buttons."
   (let ((button-func (noman--button-func cmd))
+        (subcommand-p (string-search " " cmd))
         (buttons nil))
     (save-excursion
       (goto-char (point-min))
       (while (not (eobp))
-        (push (funcall button-func
-                       (buffer-substring (line-beginning-position) (line-end-position)))
-              buttons)
+        (when-let ((btns (funcall button-func subcommand-p)))
+          (or (listp btns) (setq btns (list btns)))
+          (dolist (pos btns)
+            (push (if (overlayp pos) pos
+                    (make-button (car pos) (cdr pos)
+                                 'action #'noman--follow-link))
+                  buttons)))
         (forward-line)))
     (delq nil buttons)))
 
@@ -162,10 +185,40 @@ Return list of created buttons."
 
 (defun noman--generate-buffer-name (cmd)
   "Generate a buffer name from CMD.
-If noman-reuse-buffers is t, *noman* will always be returned."
+If `noman-reuse-buffers' is t, *noman* will always be returned."
   (if noman-reuse-buffers
       "*noman*"
     (format "*noman %s*" cmd)))
+
+(defun noman--build-help-command (cmd &optional args)
+  "Build help command for CMD with ARGS."
+  (if-let ((order (car (assoc-default cmd noman-help-format))))
+      (delq nil (mapcan (lambda (arg)
+                          (pcase arg
+                            ((pred stringp) (list arg))
+                            ('command (list cmd))
+                            ('args args)
+                            (_ (error "Unmatched help arg: '%S'" arg))))
+                        order))
+    (cons cmd (append args '("--help")))))
+
+(defun noman--build-alt-help-command (args)
+  "Build alternative help command from ARGS.
+Swaps \"help\" for \"--help\" and vice versa."
+  (mapcar (lambda (e)
+            (pcase e
+              ("help" "--help")
+              ("--help" "help")
+              (_ e)))
+          args))
+
+(defun noman--call-help-commands (args)
+  "Call help command ARGS and its alternative if it fails."
+  (let ((cmd (car args))
+        (args (cdr args)))
+    (unless (zerop (apply #'call-process cmd nil t nil args))
+      (erase-buffer)
+      (apply #'call-process cmd nil t nil (noman--build-alt-help-command args)))))
 
 (defun noman--buffer (cmd)
   "Prepare and display noman CMD's noman buffer."
@@ -190,21 +243,9 @@ If noman-reuse-buffers is t, *noman* will always be returned."
 	 nil))
        ((string-suffix-p " not found" type)
         (user-error "Command '%s' not found" prefix))
-       (t (unless (= (apply #'call-process
-			    prefix
-			    nil
-			    t
-			    nil
-			    `(,@(cdr tokens) "--help"))
-                     0)
-            (erase-buffer)
-	    (apply #'call-process
-		   prefix
-		   nil
-		   t
-		   nil
-		   `(,@(cdr tokens) "help"))
-	    (replace-regexp-in-region "." "" (point-min) (point-max)))
+       (t (let ((args (noman--build-help-command prefix (cdr tokens))))
+            (noman--call-help-commands args)
+            (replace-regexp-in-region "." "" (point-min) (point-max)))
           (when-let ((versioninfo
                       (save-excursion
                         (with-temp-buffer
